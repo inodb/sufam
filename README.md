@@ -17,5 +17,16 @@ python setup.py install
 
 ## Run
 ```
-sufam --help
+$ sufam --help
+usage: sufam [-h] [--sample_name SAMPLE_NAME] reffa vcf bam
+
+positional arguments:
+  reffa                 Reference genome (fasta)
+  vcf                   VCF with mutations to be validated
+  bam                   BAM to find mutations in
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --sample_name SAMPLE_NAME
+                        Set name of sample, used in output.
 ```
