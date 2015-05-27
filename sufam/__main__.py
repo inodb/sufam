@@ -4,8 +4,10 @@ So U Found A Mutation? (SUFAM)
 
 Found a mutation in one or more samples? Now you want to check if they are in
 another sample. Unfortunately mutect, varscan or whatever other variant caller
-is not calling them. Use SUFAM. The super sensitive validation caller that calls
-everything on a given position.
+is not calling them. Use SUFAM. The super sensitive validation caller that
+calls everything on a given position. All you need is a vcf with the mutations
+that you are interested in and the sam/bam file of the sample where you want to
+find the same inconsipicuous mutation.
 
 Author: inodb
 """
@@ -18,7 +20,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from . import mpileup_parser
+from sufam import mpileup_parser
 
 
 def get_pile_up_baseparser(bam, chrom, pos1, pos2, reffa):
@@ -145,13 +147,13 @@ def select_only_revertant_mutations(bpdf, snv=None, ins=None, dlt=None):
 def validate_mutations(vcffile, bam, reffa, sample):
     """Check if mutations in vcf are in bam"""
     header = []
+    row = []
     for line in open(vcffile):
         if line.startswith("#CHROM"):
-            header = line[1:].split("\t")
+            header = line[1:].rstrip('\n').split("\t")
         if line.startswith("#"):
             continue
-        record = dict(zip(header, line.split("\t")))
-        row = []
+        record = dict(zip(header, line.rstrip('\n').split("\t")))
         bpdf = get_baseparser_extended_df(bam, sample, record["CHROM"], record["POS"], record["POS"], reffa)
         if len(record["REF"]) == len(record["ALT"]):
             if len(bpdf[(bpdf.most_common_al == record["ALT"]) & (bpdf.most_common_al_maf > 0)]) > 0:
@@ -171,7 +173,7 @@ def validate_mutations(vcffile, bam, reffa, sample):
                     row += [True]
                 else:
                     row += [False]
-    print "\t".join([str(int(x)) for x in row])
+    return "\t".join([str(int(x)) for x in row])
 
 
 def main():
@@ -185,7 +187,7 @@ def main():
     args = parser.parse_args()
     if args.sample_name is None:
         args.sample_name = args.bam
-    validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name)
+    print validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name)
 
 
 if __name__ == "__main__":
