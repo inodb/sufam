@@ -32,3 +32,11 @@ class TestValidation(object):
                                                "test"
                                                )
         assert_equals("0\t1", rv)
+
+    def test_validate_mutations_indel(self):
+        rv = sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations_indel.vcf"),
+                                               ospj(DATA_PATH, "OCT9T.bam"),
+                                               ospj(DATA_PATH, "human_g1k_v37.fa"),
+                                               "test"
+                                               )
+        assert_equals("1\t1\t0", rv)

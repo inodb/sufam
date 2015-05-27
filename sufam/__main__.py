@@ -34,8 +34,10 @@ def get_pile_up_baseparser(bam, chrom, pos1, pos2, reffa):
     else:
         cmd += " | tail -n +2"
     sys.stderr.write("Running:\n{}\n".format(cmd))
-    rv = subprocess.Popen(cmd,
-            shell=True, stdout=subprocess.PIPE).communicate()[0]
+    child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    rv = child.communicate()[0]
+    if child.returncode != 0:
+        raise(Exception("Command:\n{cmd}\n did not exit with zero exit code. Check command.".format(cmd=cmd)))
     return [mpileup_parser.parse(line) for line in rv.split("\n")[:-1]]
 
 
