@@ -16,6 +16,9 @@ python setup.py install
 ```
 
 ## Run
+
+[comment]: <> (echo '```'; echo '$ sufam --help'; sufam --help | head -1; sufam --help | awk 'BEGIN {flip=0} {if (!flip) { if ($0 ~ "Author") {flip=1}} else {print $0}}'; echo '``'; ) >> README.md
+
 ```
 $ sufam --help
 usage: sufam [-h] [--sample_name SAMPLE_NAME] reffa vcf bam
