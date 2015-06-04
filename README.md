@@ -16,14 +16,9 @@ python setup.py install
 ```
 
 ## Run
-
-<!--
-(echo '```'; echo '$ sufam --help'; sufam --help | head -1; sufam --help | awk 'BEGIN {flip=0} {if (!flip) { if ($0 ~ "Author") {flip=1}} else {print $0}}'; echo '``'; ) >> README.md
--->
-
 ```
-$ sufam --help
-usage: sufam [-h] [--sample_name SAMPLE_NAME] reffa vcf bam
+usage: sufam [-h] [--sample_name SAMPLE_NAME] [--format {matrix,sufam}]
+             reffa vcf bam
 
 positional arguments:
   reffa                 Reference genome (fasta)
@@ -34,4 +29,6 @@ optional arguments:
   -h, --help            show this help message and exit
   --sample_name SAMPLE_NAME
                         Set name of sample, used in output.
+  --format {matrix,sufam}
+                        Set output format
 ```
