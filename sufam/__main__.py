@@ -155,38 +155,63 @@ def select_only_revertant_mutations(bpdf, snv=None, ins=None, dlt=None):
         raise(Exception("No mutation given?"))
 
 
-def validate_mutations(vcffile, bam, reffa, sample):
+def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
     """Check if mutations in vcf are in bam"""
     header = []
-    row = []
+    output_header = "sample chrom pos ref cov A C G T * - + X most_common_indel " \
+        "most_common_indel_count most_common_indel_maf most_common_indel_type most_common_al " \
+        "most_common_al_count most_common_al_maf most_common_count most_common_maf".split()
+    output_header = "\t".join(output_header)
+
+    if output_format == "sufam":
+        outfile.write(output_header)
+        outfile.write("\n")
     for line in open(vcffile):
         if line.startswith("#CHROM"):
             header = line[1:].rstrip('\n').split("\t")
         if line.startswith("#"):
             continue
+        if len(header) == 0:
+            raise(Exception("No header found in vcf file, #CHROM not found"))
         record = dict(zip(header, line.rstrip('\n').split("\t")))
         bpdf = get_baseparser_extended_df(bam, sample, record["CHROM"], record["POS"], record["POS"], reffa)
+        no_cov_line = "\t".join([sample, record["CHROM"], record["POS"], record["REF"], str(0)] + 17*[""])
         if bpdf is None:
-            row += [False]
+            outfile.write("0" if output_format == "matrix" else no_cov_line)
+            outfile.write("\n")
         elif len(record["REF"]) == len(record["ALT"]):
-            if len(bpdf[(bpdf.most_common_al == record["ALT"]) & (bpdf.most_common_al_maf > 0)]) > 0:
-                row += [True]
+            valdf = bpdf[(bpdf.most_common_al == record["ALT"]) & (bpdf.most_common_al_maf > 0)]
+            if len(valdf) == 1:
+                outfile.write("1" if output_format == "matrix" else "\t".join([str(v) for v in list(valdf.as_matrix()[0])]))
+                outfile.write("\n")
+            elif len(valdf) == 0:
+                outfile.write("0" if output_format == "matrix" else no_cov_line)
+                outfile.write("\n")
             else:
-                row += [False]
+                raise(Exception("Should only be one mpileup output at given position, found multiple"))
         else:
             # deletion
             if len(record["REF"]) > len(record["ALT"]):
-                if len(bpdf[(bpdf.most_common_indel == record["REF"][1:]) & (bpdf.most_common_indel_maf > 0)]) > 0:
-                    row += [True]
+                valdf = bpdf[(bpdf.most_common_indel == record["REF"][1:]) & (bpdf.most_common_indel_maf > 0)]
+                if len(valdf) == 1:
+                    outfile.write("1" if output_format == "matrix" else "\t".join([str(v) for v in list(valdf.as_matrix()[0])]))
+                    outfile.write("\n")
+                elif len(valdf) == 0:
+                    outfile.write("0" if output_format == "matrix" else no_cov_line)
+                    outfile.write("\n")
                 else:
-                    row += [False]
+                    raise(Exception("Should only be one mpileup output at given position, found multiple"))
             # insertion
             else:
-                if len(bpdf[(bpdf.most_common_indel == record["ALT"][1:]) & (bpdf.most_common_indel_maf > 0)]) > 0:
-                    row += [True]
+                valdf = bpdf[(bpdf.most_common_indel == record["ALT"][1:]) & (bpdf.most_common_indel_maf > 0)]
+                if len(valdf) == 1:
+                    outfile.write("1" if output_format == "matrix" else "\t".join([str(v) for v in list(valdf.as_matrix()[0])]))
+                    outfile.write("\n")
+                elif len(valdf) == 0:
+                    outfile.write("0" if output_format == "matrix" else no_cov_line)
+                    outfile.write("\n")
                 else:
-                    row += [False]
-    return "\t".join([str(int(x)) for x in row])
+                    raise(Exception("Should only be one mpileup output at given position, found multiple"))
 
 
 def main():
@@ -197,10 +222,11 @@ def main():
     parser.add_argument("bam", type=str, help="BAM to find mutations in")
     parser.add_argument("--sample_name", type=str, default=None, help="Set name "
                         "of sample, used in output.")
+    parser.add_argument("--format", type=str, choices=["matrix","sufam"], default="sufam", help="Set output format")
     args = parser.parse_args()
     if args.sample_name is None:
         args.sample_name = args.bam
-    print validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name)
+    validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name, args.format, sys.stdout)
 
 
 if __name__ == "__main__":

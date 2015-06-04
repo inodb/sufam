@@ -1,3 +1,4 @@
+from cStringIO import StringIO
 import sys
 import os
 from nose.tools import ok_, assert_equals
@@ -15,6 +16,7 @@ sys.path.append(PKG_PATH)
 import sufam.__main__
 from sufam import utils
 
+
 class TestValidation(object):
     def setUp(self):
         """Delete temporary dir if it exists then create it"""
@@ -26,17 +28,23 @@ class TestValidation(object):
         utils.rm_rf(TMP_DIR_PATH)
 
     def test_validate_mutations(self):
-        rv = sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations.vcf"),
-                                               ospj(DATA_PATH, "OCT10T.bam"),
-                                               ospj(DATA_PATH, "human_g1k_v37.fa"),
-                                               "test"
-                                               )
-        assert_equals("0\t1", rv)
+        out = StringIO()
+        sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations.vcf"),
+                                            ospj(DATA_PATH, "OCT10T.bam"),
+                                            ospj(DATA_PATH, "human_g1k_v37.fa"),
+                                            "test",
+                                            "matrix",
+                                            out
+                                            )
+        assert_equals("0\n1\n", out.getvalue())
 
     def test_validate_mutations_indel(self):
-        rv = sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations_indel.vcf"),
-                                               ospj(DATA_PATH, "OCT9T.bam"),
-                                               ospj(DATA_PATH, "human_g1k_v37.fa"),
-                                               "test"
-                                               )
-        assert_equals("1\t1\t0", rv)
+        out = StringIO()
+        sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations_indel.vcf"),
+                                            ospj(DATA_PATH, "OCT9T.bam"),
+                                            ospj(DATA_PATH, "human_g1k_v37.fa"),
+                                            "test",
+                                            "matrix",
+                                            out
+                                            )
+        assert_equals("1\n1\n0\n", out.getvalue())
