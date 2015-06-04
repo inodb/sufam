@@ -16,6 +16,7 @@ from collections import Counter
 import glob
 import subprocess
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -35,10 +36,16 @@ def get_pile_up_baseparser(bam, chrom, pos1, pos2, reffa):
         cmd += " | tail -n +2"
     sys.stderr.write("Running:\n{}\n".format(cmd))
     child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    rv = child.communicate()[0]
+    stdout, stderr = child.communicate()
     if child.returncode != 0:
-        raise(Exception("Command:\n{cmd}\n did not exit with zero exit code. Check command.".format(cmd=cmd)))
-    return [mpileup_parser.parse(line) for line in rv.split("\n")[:-1]]
+        if len(stdout) == 0 and stderr is None:
+            warnings.warn("Command:\n{cmd}\n did not exit with zero exit code. "
+                "Possibly no coverage for sample.".format(cmd=cmd))
+        else:
+            raise(Exception("Command:\n{cmd}\n did not exit with zero exit code. "
+                "Check command.".format(cmd=cmd)))
+    else:
+        return [mpileup_parser.parse(line) for line in stdout.split("\n")[:-1]]
 
 
 def _most_common_al(x):
@@ -84,6 +91,8 @@ def get_baseparser_extended_df(bam, sample, chrom, pos1, pos2, reffa):
     """Turn baseParser results into a dataframe"""
     columns = "chrom\tpos\tref\tcov\tA\tC\tG\tT\t*\t-\t+\tX".split()
     bp_lines = get_pile_up_baseparser(bam, chrom, pos1, pos2, reffa)
+    if bp_lines is None:
+        return None
 
     # change baseparser output to get most common maf per indel
     bpdf = pd.DataFrame([[bam.split("/")[1][:-4]] + l.rstrip('\n').split("\t") for l in bp_lines if len(l) > 0],
@@ -157,7 +166,9 @@ def validate_mutations(vcffile, bam, reffa, sample):
             continue
         record = dict(zip(header, line.rstrip('\n').split("\t")))
         bpdf = get_baseparser_extended_df(bam, sample, record["CHROM"], record["POS"], record["POS"], reffa)
-        if len(record["REF"]) == len(record["ALT"]):
+        if bpdf is None:
+            row += [False]
+        elif len(record["REF"]) == len(record["ALT"]):
             if len(bpdf[(bpdf.most_common_al == record["ALT"]) & (bpdf.most_common_al_maf > 0)]) > 0:
                 row += [True]
             else:
