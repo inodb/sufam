@@ -10,6 +10,7 @@
 
 import os
 import sys
+import re
 
 class ParseString(object):
 
@@ -38,15 +39,15 @@ class ParseString(object):
                     self.types[self.ref] += 1
                     self.string = self.string[1:]
                 elif self.string[1] == '+':
-                    insertionLength = int(self.string[2])
-                    insertionSeq = self.string[3:3+ insertionLength]
+                    insertionLength = int(re.match('(\d+)', self.string[2:]).group(1))
+                    insertionSeq = self.string[3 + len(str(insertionLength)) - 1:3+ insertionLength + len(str(insertionLength)) - 1]
                     self.types['+'].append(insertionSeq)
-                    self.string = self.string[3+insertionLength:]
+                    self.string = self.string[3 + len(str(insertionLength)) - 1 + insertionLength:]
                 elif self.string[1] == '-':
-                    deletionLength = int(self.string[2])
-                    deletionSeq = self.string[3:3+deletionLength]
-                    self.types['-'].append(deletionSeq)
-                    self.string = self.string[3+deletionLength:]
+                    deletionLength = int(re.match('(\d+)', self.string[2:]).group(1))
+                    deletionSeq = self.string[3 + len(str(deletionLength)) - 1:3+ deletionLength + len(str(deletionLength)) - 1]
+                    self.types['+'].append(deletionSeq)
+                    self.string = self.string[3 + len(str(deletionLength)) - 1 + deletionLength:]
 
             elif self.types.has_key(self.string[0]) and\
                  ((len(self.string)==1) or (self.string[1] not in ['-','+'])):
@@ -55,15 +56,15 @@ class ParseString(object):
                     self.types[self.string[0]] += 1
                     self.string = self.string[1:]
                 elif self.string[0] == '+':
-                    insertionLength = int(self.string[1])
-                    insertionSeq = self.string[2:2+ insertionLength]
+                    insertionLength = int(re.match('(\d+)', self.string[2:]).group(1))
+                    insertionSeq = self.string[3 + len(str(insertionLength)) - 1:3+ insertionLength + len(str(insertionLength)) - 1]
                     self.types['+'].append(insertionSeq)
-                    self.string = self.string[2+insertionLength:]
+                    self.string = self.string[3 + len(str(insertionLength)) - 1 + insertionLength:]
                 elif self.string[0] == '-':
-                    deletionLength = int(self.string[1])
-                    deletionSeq = self.string[2:2+deletionLength]
-                    self.types['-'].append(deletionSeq)
-                    self.string = self.string[2+deletionLength:]
+                    deletionLength = int(re.match('(\d+)', self.string[2:]).group(1))
+                    deletionSeq = self.string[3 + len(str(deletionLength)) - 1:3+ deletionLength + len(str(deletionLength)) - 1]
+                    self.types['+'].append(deletionSeq)
+                    self.string = self.string[3 + len(str(deletionLength)) - 1 + deletionLength:]
             else:
                 # unrecognized character
                 # or a read that reports a substitition followed by an insertion/deletion
