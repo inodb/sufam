@@ -46,7 +46,7 @@ class ParseString(object):
                 elif self.string[1] == '-':
                     deletionLength = int(re.match('(\d+)', self.string[2:]).group(1))
                     deletionSeq = self.string[3 + len(str(deletionLength)) - 1:3+ deletionLength + len(str(deletionLength)) - 1]
-                    self.types['+'].append(deletionSeq)
+                    self.types['-'].append(deletionSeq)
                     self.string = self.string[3 + len(str(deletionLength)) - 1 + deletionLength:]
 
             elif self.types.has_key(self.string[0]) and\
@@ -63,7 +63,7 @@ class ParseString(object):
                 elif self.string[0] == '-':
                     deletionLength = int(re.match('(\d+)', self.string[2:]).group(1))
                     deletionSeq = self.string[3 + len(str(deletionLength)) - 1:3+ deletionLength + len(str(deletionLength)) - 1]
-                    self.types['+'].append(deletionSeq)
+                    self.types['-'].append(deletionSeq)
                     self.string = self.string[3 + len(str(deletionLength)) - 1 + deletionLength:]
             else:
                 # unrecognized character
@@ -89,7 +89,7 @@ def parse(line):
 def main():
     print >>sys.stdout, "chrom\tpos\tref\tcov\tA\tC\tG\tT\t*\t-\t+\tX"
     for line in sys.stdin:
-        print >>sys.stdout, parse_mpileup_line(line)
+        print >>sys.stdout, parse(line)
 
 if __name__ == '__main__':
     main()
