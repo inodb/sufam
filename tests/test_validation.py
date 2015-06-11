@@ -52,5 +52,5 @@ class TestValidation(object):
 
     def test_mpileup_parser_two_digit_indel(self):
         two_digit_indel = "X\t150349557\tC\t24\t.$,-12caccactggcca.-12CACCACTGGCCA.,.,,,,.-12CACCACTGGCCA,..,,-12caccactggcca..-12CACCACTGGCCA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"
-        assert_equals("X\t150349557\tC\t24\t0\t19\t0\t0\t0\t\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t",
+        assert_equals("X\t150349557\tC\t24\t0\t19\t0\t0\t0\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t\t",
             mpileup_parser.parse(two_digit_indel))
