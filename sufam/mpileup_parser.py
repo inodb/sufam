@@ -21,7 +21,10 @@ class ParseString(object):
 
     def process(self):
         # process and remove all indels from the pileup
-        for m in re.finditer(r"([+-])(\d+)([ATCG]+)", self.string):
+        while 1:
+            m = re.search(r"([+-])(\d+)([ATCG]+)", self.string)
+            if m is None:
+                break
             typ = m.group(1)
             le = int(m.group(2))
             seq = m.group(3)[0:le]
@@ -30,7 +33,7 @@ class ParseString(object):
         # rm two characters when encountering '^' as it indicates
         # a read start mark and the read mapping quality
         self.string = re.sub(r"^..", '', self.string)
-        self.types[self.ref] = len(re.findall(r"[.,]", self.string))
+        self.types[self.ref] = len(re.findall(r"[\.,]", self.string))
         for x in re.findall(r"[ATCG*]", self.string):
             self.types[x] += 1
         return

@@ -250,7 +250,7 @@ def main():
     args = parser.parse_args()
     if args.sample_name is None:
         args.sample_name = args.bam
-        validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name, args.format, sys.stdout)
+    validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name, args.format, sys.stdout)
 
 
 if __name__ == "__main__":
