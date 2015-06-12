@@ -209,11 +209,11 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
     if output_format == "sufam":
         outfile.write("\t".join(output_header))
         outfile.write("\n")
-        for line in open(vcffile):
-            if line.startswith("#CHROM"):
-                header = line[1:].rstrip('\n').split("\t")
-            if line.startswith("#"):
-                continue
+    for line in open(vcffile):
+        if line.startswith("#CHROM"):
+            header = line[1:].rstrip('\n').split("\t")
+        if line.startswith("#"):
+            continue
         if len(header) == 0:
             raise(Exception("No header found in vcf file, #CHROM not found"))
         record = dict(zip(header, line.rstrip('\n').split("\t")))
@@ -222,20 +222,21 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
             record_type = "deletion"
         elif len(record["ALT"]) > len(record["REF"]):
             record_type = "insertion"
-            no_cov = pd.Series({
-                "sample": sample,
-                "chrom": record["CHROM"], "pos": record["POS"],
-                "ref": record["REF"],
-                "cov": 0, "A": 0, "C": 0, "G": 0, "T": 0,
-                "val_ref": record["REF"], "val_alt": record["ALT"],
-                "val_al_type": record_type, "val_al_count": 0, "val_maf": 0})
-            bpdf = get_baseparser_extended_df(bam, sample, record["CHROM"], record["POS"], record["POS"], reffa,
-                                              record["REF"], record["ALT"])
-            if bpdf is None:
-                bp = no_cov
-            else:
-                bp = bpdf.ix[0, :]
-                _write_bp(outfile, bp, output_header, output_format)
+        no_cov = pd.Series({
+            "sample": sample,
+            "chrom": record["CHROM"], "pos": record["POS"],
+            "ref": record["REF"],
+            "cov": 0, "A": 0, "C": 0, "G": 0, "T": 0,
+            "val_ref": record["REF"], "val_alt": record["ALT"],
+            "val_al_type": record_type, "val_al_count": 0, "val_maf": 0})
+        bpdf = get_baseparser_extended_df(bam, sample, record["CHROM"], record["POS"], record["POS"], reffa,
+                                          record["REF"], record["ALT"])
+        if bpdf is None:
+            bp = no_cov
+        else:
+            bp = bpdf.ix[0, :]
+        if output_format == "sufam":
+            _write_bp(outfile, bp, output_header, output_format)
 
 
 def main():
