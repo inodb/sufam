@@ -14,6 +14,7 @@ PKG_PATH = ospj(TEST_DIR_PATH, '..')
 
 sys.path.append(PKG_PATH)
 import sufam.__main__
+import sufam.mpileup_parser as mpileup_parser
 from sufam import utils
 
 
@@ -48,3 +49,8 @@ class TestValidation(object):
                                             out
                                             )
         assert_equals("1\n1\n0\n", out.getvalue())
+
+    def test_mpileup_parser_two_digit_indel(self):
+        two_digit_indel = "X\t150349557\tC\t24\t.$,-12caccactggcca.-12CACCACTGGCCA.,.,,,,.-12CACCACTGGCCA,..,,-12caccactggcca..-12CACCACTGGCCA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"
+        assert_equals("X\t150349557\tC\t24\t0\t19\t0\t0\t0\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t\t",
+            mpileup_parser.parse(two_digit_indel))
