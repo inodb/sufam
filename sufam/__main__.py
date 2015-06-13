@@ -89,7 +89,7 @@ def _most_common_indel(x):
 
 def get_baseparser_extended_df(bam, sample, chrom, pos1, pos2, reffa):
     """Turn baseParser results into a dataframe"""
-    columns = "chrom\tpos\tref\tcov\tA\tC\tG\tT\t*\t-\t+\tX".split()
+    columns = "chrom\tpos\tref\tcov\tA\tC\tG\tT\t*\t-\t+".split()
     bp_lines = get_pile_up_baseparser(bam, chrom, pos1, pos2, reffa)
     if bp_lines is None:
         return None
