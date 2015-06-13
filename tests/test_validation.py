@@ -48,7 +48,7 @@ class TestValidation(object):
                                             "matrix",
                                             out
                                             )
-        assert_equals("1\n1\n0\n", out.getvalue())
+        assert_equals("1\n0\n1\n0\n0\n", out.getvalue())
 
     def test_mpileup_parser_two_digit_indel(self):
         two_digit_indel = "X\t150349557\tC\t24\t.$,-12caccactggcca.-12CACCACTGGCCA.,.,,,,.-12CACCACTGGCCA,..,,-12caccactggcca..-12CACCACTGGCCA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"

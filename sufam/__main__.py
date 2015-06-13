@@ -192,7 +192,9 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
         else:
             # deletion
             if len(record["REF"]) > len(record["ALT"]):
-                valdf = bpdf[(bpdf.most_common_indel == record["REF"][1:]) & (bpdf.most_common_indel_maf > 0)]
+                valdf = bpdf[(bpdf.most_common_indel == record["REF"][1:]) &
+                             (bpdf.most_common_indel_type == "-") &
+                             (bpdf.most_common_indel_maf > 0)]
                 if len(valdf) == 1:
                     outfile.write("1" if output_format == "matrix" else "\t".join([str(v) for v in list(valdf.as_matrix()[0])]))
                     outfile.write("\n")
@@ -203,7 +205,9 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
                     raise(Exception("Should only be one mpileup output at given position, found multiple"))
             # insertion
             else:
-                valdf = bpdf[(bpdf.most_common_indel == record["ALT"][1:]) & (bpdf.most_common_indel_maf > 0)]
+                valdf = bpdf[(bpdf.most_common_indel == record["ALT"][1:]) &
+                             (bpdf.most_common_indel_type == "+") &
+                             (bpdf.most_common_indel_maf > 0)]
                 if len(valdf) == 1:
                     outfile.write("1" if output_format == "matrix" else "\t".join([str(v) for v in list(valdf.as_matrix()[0])]))
                     outfile.write("\n")
