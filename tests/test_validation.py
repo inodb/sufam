@@ -54,3 +54,8 @@ class TestValidation(object):
         two_digit_indel = "X\t150349557\tC\t24\t.$,-12caccactggcca.-12CACCACTGGCCA.,.,,,,.-12CACCACTGGCCA,..,,-12caccactggcca..-12CACCACTGGCCA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"
         assert_equals("X\t150349557\tC\t24\t0\t24\t0\t0\t0\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t",
             mpileup_parser.parse(two_digit_indel))
+
+    def test_mpileup_parser_indel_followed_by_snv(self):
+        indel_followed_by_snv = "X\t150349557\tC\t28\t.$,-12caccactggccat-12CACCACTGGCCAT.,.,,,,.-12CACCACTGGCCAT,..,,-12caccactggccaG..-12CACCACTGGCCAA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"
+        assert_equals("X\t150349557\tC\t28\t1\t23\t1\t3\t0\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t",
+            mpileup_parser.parse(indel_followed_by_snv))

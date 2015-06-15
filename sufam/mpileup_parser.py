@@ -26,10 +26,12 @@ class ParseString(object):
                 break
             typ = m.group(1)
             le = int(m.group(2))
+            # get indel of given length
             seq = m.group(3)[0:le]
             self.types[typ].append(seq)
+            # remove only indel (eg not C after +2ATC)
             self.string = self.string[:m.start()] + \
-                self.string[m.end():]
+                self.string[m.start() + 1 + len(m.group(2)) + le:]
         self.types[self.ref] = len(re.findall(r"[.,]", self.string))
         for x in re.findall(r"[ATCG*]", self.string):
             self.types[x] += 1
