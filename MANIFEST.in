@@ -1,0 +1,2 @@
+include versioneer.py
+include sufam/_version.py
