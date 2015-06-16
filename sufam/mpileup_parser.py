@@ -18,7 +18,7 @@ class ParseString(object):
     def process(self):
         # rm two characters when encountering '^' as it indicates
         # a read start mark and the read mapping quality
-        self.string = re.sub(re.escape("^") + "..", '', self.string)
+        self.string = re.sub(re.escape("^") + ".", '', self.string)
         # process and remove all indels from the pileup
         while 1:
             m = re.search(r"([+-])(\d+)([ATCG]+)", self.string)
@@ -30,6 +30,7 @@ class ParseString(object):
             seq = m.group(3)[0:le]
             self.types[typ].append(seq)
             # remove only indel (eg not C after +2ATC)
+            self.oldstring = self.string
             self.string = self.string[:m.start()] + \
                 self.string[m.start() + 1 + len(m.group(2)) + le:]
         self.types[self.ref] = len(re.findall(r"[.,]", self.string))

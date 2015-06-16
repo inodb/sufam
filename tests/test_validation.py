@@ -1,7 +1,7 @@
 from cStringIO import StringIO
 import sys
 import os
-from nose.tools import ok_, assert_equals
+from nose.tools import ok_, assert_equals, assert_almost_equals
 import numpy as np
 from os.path import join as ospj
 
@@ -59,3 +59,31 @@ class TestValidation(object):
         indel_followed_by_snv = "X\t150349557\tC\t28\t.$,-12caccactggccat-12CACCACTGGCCAT.,.,,,,.-12CACCACTGGCCAT,..,,-12caccactggccaG..-12CACCACTGGCCAA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"
         assert_equals("X\t150349557\tC\t28\t1\t23\t1\t3\t0\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t",
             mpileup_parser.parse(indel_followed_by_snv))
+
+    def test_mpileup_test1(self):
+        test = open(ospj(DATA_PATH, "mpileup_test1.tsv")).read()
+        bpdf = sufam.__main__.get_baseparser_extended_df("test", [mpileup_parser.parse(test)], "AG", "A")
+        assert_equals(test.count(",") + test.count("."), int(bpdf['cov'].iloc[0]))
+        assert_equals(int(bpdf['cov'].iloc[0]), int(bpdf.A.iloc[0]))
+        assert_almost_equals(0.7225, float(bpdf.val_maf.iloc[0]), places=3)
+        assert_almost_equals(0.7225, float(bpdf.most_common_indel_maf.iloc[0]), places=3)
+        assert_equals("-", bpdf.most_common_indel_type.iloc[0])
+
+    def test_mpileup_test2(self):
+        test = open(ospj(DATA_PATH, "mpileup_test2.tsv")).read()
+        bpdf = sufam.__main__.get_baseparser_extended_df("test", [mpileup_parser.parse(test)], "G", "GAA")
+        assert_equals(int(bpdf['cov'].iloc[0]), int(bpdf.G.iloc[0]))
+        assert_equals(test.count(",") + test.count("."), int(bpdf['cov'].iloc[0]))
+        assert_almost_equals(0.4324, float(bpdf.val_maf.iloc[0]), places=3)
+        assert_almost_equals(0.4324, float(bpdf.most_common_indel_maf.iloc[0]), places=3)
+        assert_equals("+", bpdf.most_common_indel_type.iloc[0])
+
+    def test_mpileup_test3(self):
+        test = open(ospj(DATA_PATH, "mpileup_test3.tsv")).read()
+        bpdf = sufam.__main__.get_baseparser_extended_df("test", [mpileup_parser.parse(test)], "G", "A")
+        assert_equals(int(bpdf['cov'].iloc[0]), int(bpdf.G.iloc[0]) + int(bpdf.A.iloc[0]) + int(bpdf["T"].iloc[0]))
+        assert_equals(1, int(bpdf["T"].iloc[0]))
+        assert_equals("AA", bpdf.most_common_indel.iloc[0])
+        assert_equals("+", bpdf.most_common_indel_type.iloc[0])
+        assert_almost_equals(0.0139, float(bpdf.val_maf.iloc[0]), places=3)
+        assert_almost_equals(0.0139, float(bpdf.most_common_al_maf.iloc[0]), places=3)
