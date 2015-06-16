@@ -66,15 +66,17 @@ def _val_al(x):
         if len(x["val_ref"]) == 1 and len(x["val_alt"]) == 1:  # SNV
             al_count = int(x.ix[x["val_alt"]])
             al_type = "snv"
+            al_maf = al_count / float(x["cov"]) if float(x["cov"]) > 0 else None
         elif len(x["val_alt"]) > len(x["val_ref"]):  # insertion
             query = x["val_alt"][len(x["val_ref"]):]
             al_count = Counter(x["+"].split(","))[query] if x["+"] is not None else 0
             al_type = "insertion"
+            al_maf = al_count / (float(x["cov"]) + al_count)
         else:  # deletion
             query = x["val_ref"][len(x["val_alt"]):]
             al_count = Counter(x["-"].split(","))[query] if x["-"] is not None else 0
+            al_maf = al_count / (float(x["cov"]) + al_count)
             al_type = "deletion"
-        al_maf = al_count / float(x["cov"]) if float(x["cov"]) > 0 else None
         return pd.Series({"val_al_type": al_type,
                           "val_al_count": al_count,
                           "val_maf": al_maf})
