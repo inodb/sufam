@@ -1,5 +1,9 @@
 So U Found A Mutation? (SUFAM)
 ==============================
+.. image:: https://badge.fury.io/py/sufam.svg
+    :target: http://badge.fury.io/py/sufam
+.. image:: http://anaconda.org/inodb/sufam/badges/version.svg
+    :target: http://anaconda.org/inodb/sufam
 
 Found a mutation in one or more samples? Now you want to check if they are in
 another sample. Unfortunately mutect, varscan or whatever other variant caller
