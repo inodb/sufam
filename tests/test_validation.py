@@ -31,8 +31,8 @@ class TestValidation(object):
     def test_validate_mutations(self):
         out = StringIO()
         sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations.vcf"),
-                                            ospj(DATA_PATH, "OCT10T.bam"),
-                                            ospj(DATA_PATH, "human_g1k_v37.fa"),
+                                            ospj(DATA_PATH, "subset1.bam"),
+                                            ospj(DATA_PATH, "human_g1k_v37_chr17.fa"),
                                             "test",
                                             "matrix",
                                             out
@@ -42,8 +42,15 @@ class TestValidation(object):
     def test_validate_mutations_indel(self):
         out = StringIO()
         sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations_indel.vcf"),
-                                            ospj(DATA_PATH, "OCT9T.bam"),
-                                            ospj(DATA_PATH, "human_g1k_v37.fa"),
+                                            ospj(DATA_PATH, "subset2.bam"),
+                                            ospj(DATA_PATH, "human_g1k_v37_chr17.fa"),
+                                            "test",
+                                            "matrix",
+                                            out
+                                            )
+        sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations_indel2.vcf"),
+                                            ospj(DATA_PATH, "subset3.bam"),
+                                            ospj(DATA_PATH, "human_g1k_v37_chr17.fa"),
                                             "test",
                                             "matrix",
                                             out
