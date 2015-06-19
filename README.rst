@@ -38,7 +38,7 @@ Run
                             Set output format
 
 Example
--------
+~~~~~~~
 VCF file like::
 
     #CHROM	POS	ID	REF	ALT
