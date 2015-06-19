@@ -2,14 +2,26 @@ language: python
 python:
   - "2.7"
 install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq samtools
-  - sudo pip install conda
-  - sudo conda init
-  - sudo conda update conda --yes
-  - deps='pip numpy pandas requests nose numpydoc sphinx'
-  - conda create -p $HOME/py --yes $deps "python=$TRAVIS_PYTHON_VERSION"
-  - export PATH=$HOME/py/bin:$PATH
-  - python setup.py install
+  - sudo apt-get update
+  - sudo apt-get install samtools
+  - case "$TRAVIS_PYTHON_VERSION" in
+    2*)
+      wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      PYTHON="python"
+      ;;
+    3*)
+      wget http://repo.continuum.io/miniconda/Miniconda3-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      PYTHON="python3"
+      ;;
+    esac
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n sufam-env
+    numpy pandas nose
+  - source activate sufam-env
 script:
   - nosetests
