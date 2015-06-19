@@ -193,7 +193,7 @@ def select_only_revertant_mutations(bpdf, snv=None, ins=None, dlt=None):
 
 def _write_bp(outfile, bp, header, output_format):
     if output_format == "sufam":
-        outfile.write("\t".join(bp.get(header, None).astype(str)) + "\n")
+        outfile.write("\t".join(bp.where(pd.notnull(bp), np.nan).get(header, None).astype(str)) + "\n")
     elif output_format == "matrix":
         outfile.write("1\n" if bp.val_al_count > 0 else "0\n")
     else:

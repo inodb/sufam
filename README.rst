@@ -36,3 +36,32 @@ Run
                             Set name of sample, used in output.
     --format {matrix,sufam}
                             Set output format
+
+Example
+-------
+VCF file like::
+
+    #CHROM	POS	ID	REF	ALT
+    17	7574012	COSM11286,COSM214290	C	G
+    17	7574012	COSM11286,COSM214290	C	A
+
+Check if given mutations are in a bam file::
+
+    sufam human_g1k_v37_chr17.fa mutations.vcf subset1.bam 2> example/sufam.log > example/sufam.tsv
+
+Output:
+
+- `example/sufam.log <example/sufam.log>`
+- `example/sufam.tsv <example/sufam.tsv>`
+ 
+Developers
+----------
+Tests
+~~~~~
+In root dir run::
+
+    nosetests
+
+For individual tests::
+
+    nosetests -s tests/test_validation.py:TestValidation.test_validate_mutations_indel

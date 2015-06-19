@@ -1,0 +1,8 @@
+Running:
+samtools view -bh tests/test_data/subset1.bam 17:7574012-7574012 | samtools mpileup -R -q 1 -f tests/test_data/human_g1k_v37_chr17.fa - | grep -P '^17\t7574012\t'
+[mpileup] 1 samples in 1 input files
+<mpileup> Set max per-file depth to 8000
+Running:
+samtools view -bh tests/test_data/subset1.bam 17:7574012-7574012 | samtools mpileup -R -q 1 -f tests/test_data/human_g1k_v37_chr17.fa - | grep -P '^17\t7574012\t'
+[mpileup] 1 samples in 1 input files
+<mpileup> Set max per-file depth to 8000
