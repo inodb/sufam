@@ -20,6 +20,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+import sufam
 from sufam import mpileup_parser
 
 
@@ -248,6 +249,7 @@ def main():
     parser.add_argument("--sample_name", type=str, default=None, help="Set name "
                         "of sample, used in output.")
     parser.add_argument("--format", type=str, choices=["matrix", "sufam"], default="sufam", help="Set output format")
+    parser.add_argument("--version", action='version', version=sufam.__version__)
     args = parser.parse_args()
     if args.sample_name is None:
         args.sample_name = args.bam
