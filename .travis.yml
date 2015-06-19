@@ -1,18 +1,15 @@
-nguage: python
+language: python
 python:
   - "2.7"
-virtualenv:
- system_site_packages: true
-before_install:
-  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.3.0-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.3.0-Linux-x86_64.sh -O miniconda.sh; fi
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - conda update --yes conda
-  - export PATH=/home/travis/miniconda/bin:$PATH
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq build-essential libgsl0-dev samtools
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy pandas pip
-  - pip install -e .
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq samtools
+  - sudo pip install conda
+  - sudo conda init
+  - sudo conda update conda --yes
+  - deps='pip numpy pandas requests nose numpydoc sphinx'
+  - conda create -p $HOME/py --yes $deps "python=$TRAVIS_PYTHON_VERSION"
+  - export PATH=$HOME/py/bin:$PATH
+  - python setup.py install
 script:
   - nosetests
