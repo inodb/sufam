@@ -51,8 +51,8 @@ Check if given mutations are in a bam file::
 
 Output:
 
-- `example/sufam.log <example/sufam.log>`
-- `example/sufam.tsv <example/sufam.tsv>`
+- `example/sufam.log <example/sufam.log>`_
+- `example/sufam.tsv <example/sufam.tsv>`_
  
 Developers
 ----------
