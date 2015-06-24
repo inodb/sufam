@@ -36,9 +36,9 @@ def apply_hgvs(seq, h):
 
 
 def is_revertant(record, hgvs_mut, hgvs_rev_mut):
-    normal_p = record.seq.translate()
-    mut_p = apply_hgvs(record.seq, hgvs_mut).translate()
-    revmut_p = apply_hgvs(apply_hgvs(record.seq, hgvs_mut), hgvs_rev_mut).translate()
+    normal_p = record.seq.translate(to_stop=True)
+    mut_p = apply_hgvs(record.seq, hgvs_mut).translate(to_stop=True)
+    revmut_p = apply_hgvs(apply_hgvs(record.seq, hgvs_mut), hgvs_rev_mut).translate(to_stop=True)
     logging.info("---")
     logging.info("mutation: {}".format(hgvs_mut))
     logging.info("putative revertant mutation: {}".format(hgvs_rev_mut))
@@ -67,12 +67,12 @@ def main():
     logging.basicConfig(
         stream=sys.stderr,
         level=logging.INFO,
-        format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
+        # format='%(asctime)s:%(levelname)s:%(name)s:%(message)s',
     )
     parser = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("vcf", type=str, help="VCF with mutation to be reverted")
-    parser.add_argument("oncotator_file", type=str, help="BAM to find mutations in")
+    parser.add_argument("oncotator_file", type=str, help="MAF from Oncotator to find revertant mutations in")
     parser.add_argument("fasta", type=str, help="Fasta file with transcripts")
     args = parser.parse_args()
     check_revertant_mutations(args.vcf, args.oncotator_file, args.fasta)

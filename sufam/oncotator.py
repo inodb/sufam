@@ -21,7 +21,7 @@ class Oncotator(object):
             if r != "Exception_encountered":
                 try:
                     h = hgvs.HGVSName(r)
-                    # remove .version(?) postfix
+                    # remove .version postfix
                     if h.transcript == transcript_id or ".".join(h.transcript.split(".")[:-1]) == transcript_id:
                         hgvs_muts += [h]
                 except hgvs.InvalidHGVSName:
