@@ -67,6 +67,18 @@ class TestValidation(object):
         assert_equals("X\t150349557\tC\t28\t1\t23\t1\t3\t0\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t",
             mpileup_parser.parse(indel_followed_by_snv))
 
+    def test_mpileup_parser_get_mutations(self):
+        indel_followed_by_snv = "X\t150349557\tC\t28\t.$,-12caccactggccat-12CACCACTGGCCAT.,.,,,,.-12CACCACTGGCCAT,..,,-12caccactggccaG..-12CACCACTGGCCAA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"
+        muts = mpileup_parser.get_mutations(indel_followed_by_snv)
+        assert_equals(len(muts), 4)
+        assert_equals(muts.snvs["A"].count, 1)
+        assert_equals(muts.snvs["G"].count, 1)
+        assert_equals(muts.snvs["T"].count, 3)
+        assert_equals(muts.deletions["CACCACTGGCCA"].count, 5)
+        assert_almost_equals(muts.deletions["CACCACTGGCCA"].maf, 5/28.0, places=3)
+        assert_equals("X\t150349557\tC\t28\t1\t23\t1\t3\t0\tCACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA,CACCACTGGCCA\t",
+            mpileup_parser.parse(indel_followed_by_snv))
+
     def test_mpileup_test1(self):
         test = open(ospj(DATA_PATH, "mpileup_test1.tsv")).read()
         bpdf = sufam.__main__.get_baseparser_extended_df("test", [mpileup_parser.parse(test)], "AG", "A")

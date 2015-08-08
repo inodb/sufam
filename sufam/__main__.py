@@ -13,39 +13,13 @@ Author: inodb
 """
 import argparse
 from collections import Counter
-import subprocess
 import sys
-import warnings
 
 import numpy as np
 import pandas as pd
 
 import sufam
 from sufam import mpileup_parser
-
-
-def get_pile_up_baseparser(bam, chrom, pos1, pos2, reffa):
-    """Get vcf line of given chrom and pos from mpileup and baseparser"""
-    posmin = min(pos1, pos2)
-    posmax = max(pos1, pos2)
-    cmd = "samtools view -bh {bam} {chrom}:{pos1}-{pos2} " \
-        "| samtools mpileup -R -q 1 -f {reffa} -".format(bam=bam, chrom=chrom, pos1=posmin, pos2=posmax, reffa=reffa)
-    if pos1 == pos2:
-        cmd += " | grep -P '^{chrom}\\t{pos}\\t'".format(chrom=chrom, pos=pos1)
-    else:
-        cmd += " | tail -n +2"
-    sys.stderr.write("Running:\n{}\n".format(cmd))
-    child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    stdout, stderr = child.communicate()
-    if child.returncode != 0:
-        if len(stdout) == 0 and stderr is None:
-            warnings.warn("Command:\n{cmd}\n did not exit with zero exit code. "
-                          "Possibly no coverage for sample.".format(cmd=cmd))
-        else:
-            raise(Exception("Command:\n{cmd}\n did not exit with zero exit code. "
-                            "Check command.".format(cmd=cmd)))
-    else:
-        return [mpileup_parser.parse(line) for line in stdout.split("\n")[:-1]]
 
 
 def _most_common_al(x):
@@ -126,9 +100,10 @@ def get_baseparser_extended_df(sample, bp_lines, ref, alt):
     if len(bpdf) == 0:
         return None
 
-    # add columns for validation allele
-    bpdf = pd.concat([bpdf, pd.DataFrame({"val_ref": pd.Series(ref), "val_alt": pd.Series(alt)})], axis=1)
-    bpdf = pd.concat([bpdf, bpdf.apply(_val_al, axis=1)], axis=1)
+    if ref and alt:
+        # add columns for validation allele
+        bpdf = pd.concat([bpdf, pd.DataFrame({"val_ref": pd.Series(ref), "val_alt": pd.Series(alt)})], axis=1)
+        bpdf = pd.concat([bpdf, bpdf.apply(_val_al, axis=1)], axis=1)
 
     bpdf = pd.concat([bpdf, bpdf.apply(_most_common_indel, axis=1)], axis=1)
     bpdf = pd.concat([bpdf, bpdf.apply(_most_common_al, axis=1)], axis=1)
@@ -231,7 +206,7 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
             "cov": 0, "A": 0, "C": 0, "G": 0, "T": 0,
             "val_ref": record["REF"], "val_alt": record["ALT"],
             "val_al_type": record_type, "val_al_count": 0, "val_maf": 0})
-        bp_lines = get_pile_up_baseparser(bam, record["CHROM"], record["POS"], record["POS"], reffa)
+        bp_lines = mpileup_parser.run_and_parse(bam, record["CHROM"], record["POS"], record["POS"], reffa)
         bpdf = get_baseparser_extended_df(sample, bp_lines, record["REF"], record["ALT"])
         if bpdf is None:
             bp = no_cov
