@@ -44,12 +44,14 @@ class ParseString(object):
         return
 
     def get_mutations(self, chrom, pos, cov, ref):
-        muts = MutationsAtSinglePosition(chrom, pos, cov, ref)
+        pos = int(pos)
+        muts = MutationsAtSinglePosition(chrom, pos, cov, ref[0])
 
-        for base in {"A", "C", "G", "T"} - set([self.ref]):
+        for base in {"A", "C", "G", "T"} - set([self.ref[0]]):
             m = Mutation(chrom, pos, '.', base)
             m.count = self.types[base]
             m.cov = cov
+            m.ref = self.ref[0]
             muts.add_snv(m)
 
         insertions = Counter(self.types["+"])
@@ -57,6 +59,7 @@ class ParseString(object):
             m = Mutation(chrom, pos, '+', ins)
             m.count = insertions[ins]
             m.cov = cov
+            m.ref = self.ref[0]
             muts.add_insertion(m)
 
         deletions = Counter(self.types["-"])
@@ -64,6 +67,7 @@ class ParseString(object):
             m = Mutation(chrom, pos, '-', deletion)
             m.count = deletions[deletion]
             m.cov = cov
+            m.ref = self.ref[0]
             muts.add_deletion(m)
 
         return muts
@@ -78,7 +82,7 @@ def get_mutations(line):
     toks = line.strip('\n').split('\t')
     ref = toks[2].upper()
     cov = toks[3]
-    return ParseString(ref, toks[4]).get_mutations(toks[0], toks[1], cov, ref)
+    return ParseString(ref, toks[4]).get_mutations(toks[0], int(toks[1]), cov, ref)
 
 
 def parse(line):
@@ -95,9 +99,9 @@ def run(bam, chrom, pos1, pos2, reffa):
     cmd = "samtools view -bh {bam} {chrom}:{pos1}-{pos2} " \
         "| samtools mpileup -R -q 1 -f {reffa} -".format(bam=bam, chrom=chrom, pos1=posmin, pos2=posmax, reffa=reffa)
     if pos1 == pos2:
-        cmd += " | grep -P '^{chrom}\\t{pos}\\t'".format(chrom=chrom, pos=pos1)
+        cmd += " | awk '$2 == {pos}'".format(pos=pos1)
     else:
-        cmd += " | tail -n +2"
+        cmd += " | tail -n +2 | awk '$2 >= {posmin} && $2 <= {posmax}'".format(posmin=posmin, posmax=posmax)
     sys.stderr.write("Running:\n{}\n".format(cmd))
     child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stdout, stderr = child.communicate()

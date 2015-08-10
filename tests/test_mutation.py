@@ -34,12 +34,14 @@ class TestMutation(object):
     def test_normal_filter(self):
         nmuts = mutation.parse_vcf(ospj(DATA_PATH, "normal_mutation_tests.vcf"))
         for m in nmuts:
+            m.ref = "C"
             m.count = 21
             m.cov = 100
         nmuts = mutation.MutationsAtSinglePosition.from_mutation_list(nmuts)
 
         muts = mutation.parse_vcf(ospj(DATA_PATH, "mutation_tests.vcf"))
         for m in muts:
+            m.ref = "C"
             m.count = 21
             m.cov = 100
         muts = mutation.MutationsAtSinglePosition.from_mutation_list(muts)

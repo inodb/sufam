@@ -42,9 +42,13 @@ class MutationsAtSinglePosition(object):
 
     @staticmethod
     def from_mutation_list(l):
-        muts = MutationsAtSinglePosition(l[0].chrom, l[0].pos, l[0].cov)
+        muts = MutationsAtSinglePosition(l[0].chrom, l[0].pos, l[0].cov, l[0].ref)
 
         for m in l:
+            assert(m.chrom == muts.chrom)
+            assert(m.pos == muts.pos)
+            assert(m.cov == muts.cov)
+            assert(m.ref == muts.ref)
             muts.add_mutation(m)
         return muts
 
@@ -53,13 +57,14 @@ class MutationsAtSinglePosition(object):
         """Filters mutations that are in the given normal"""
         assert(normal_mutations.chrom == self.chrom)
         assert(normal_mutations.pos == self.pos)
+        assert(normal_mutations.ref == self.ref)
 
         def passes_normal_criteria(mut):
             return (mut.count >= maf_count_threshold and mut.maf > maf_min) or \
                 (mut.count < maf_count_threshold and mut.count > count_min)
 
         nms = normal_mutations
-        muts = MutationsAtSinglePosition(self.chrom, self.pos, self.cov)
+        muts = MutationsAtSinglePosition(self.chrom, self.pos, self.cov, self.ref)
 
         for snv in self.snvs:
             if not (snv in nms.snvs and passes_normal_criteria(nms.snvs[snv])):
@@ -105,6 +110,33 @@ class Mutation(object):
     def maf(self):
         """Requires one to set count and coverage"""
         return self.count / float(self.cov)
+
+    def to_vcf(self):
+        if self.type == ".":
+            ref = self.ref
+            alt = self.change
+        elif self.type == "-":
+            ref = self.ref + self.change
+            alt = self.ref
+        elif self.type == "+":
+            ref = self.ref
+            alt = self.ref + self.change
+        return "{chrom}\t{pos}\t{id}\t{ref}\t{alt}".format(chrom=self.chrom, pos=self.pos,
+                                                           id=".", ref=ref, alt=alt)
+
+    def to_tsv(self):
+        if self.type == ".":
+            ref = self.ref
+            alt = self.change
+        elif self.type == "-":
+            ref = self.ref + self.change
+            alt = self.ref
+        elif self.type == "+":
+            ref = self.ref
+            alt = self.ref + self.change
+        return "{chrom}\t{pos}\t{id}\t{ref}\t{alt}\t{cov}\t{count}\t{maf}".format(
+            chrom=self.chrom, pos=self.pos, id=".", ref=ref, alt=alt,
+            cov=self.cov, count=self.count, maf=self.maf)
 
     def __str__(self):
         return str(self.__dict__)
