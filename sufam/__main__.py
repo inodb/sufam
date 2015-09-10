@@ -97,6 +97,9 @@ def get_baseparser_extended_df(sample, bp_lines, ref, alt):
                         columns=["sample"] + columns, dtype=np.object)
     bpdf[bpdf == ""] = None
 
+    # remove zero coverage rows
+    bpdf = bpdf[bpdf["cov"].astype(int) > 0]
+
     if len(bpdf) == 0:
         return None
 

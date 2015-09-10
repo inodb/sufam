@@ -106,3 +106,8 @@ class TestValidation(object):
         assert_equals("+", bpdf.most_common_indel_type.iloc[0])
         assert_almost_equals(0.0139, float(bpdf.val_maf.iloc[0]), places=3)
         assert_almost_equals(0.0139, float(bpdf.most_common_al_maf.iloc[0]), places=3)
+
+    def test_0cov_regionwithcov(self):
+        test = open(ospj(DATA_PATH, "mpileup_0cov_regionwithcov.tsv")).read()
+        bpdf = sufam.__main__.get_baseparser_extended_df("test", [mpileup_parser.parse(test)], "G", "GAA")
+        assert_equals(None, bpdf)
