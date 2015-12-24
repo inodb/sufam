@@ -25,7 +25,19 @@ Run
 ::
 
     usage: sufam [-h] [--sample_name SAMPLE_NAME] [--format {matrix,sufam}]
+                [--mpileup-parameters MPILEUP_PARAMETERS] [--version]
                 reffa vcf bam
+
+    So U Found A Mutation? (SUFAM)
+
+    Found a mutation in one or more samples? Now you want to check if they are in
+    another sample. Unfortunately mutect, varscan or whatever other variant caller
+    is not calling them. Use SUFAM. The super sensitive validation caller that
+    calls everything on a given position. All you need is a vcf with the mutations
+    that you are interested in and the sam/bam file of the sample where you want to
+    find the same inconsipicuous mutation.
+
+    Author: inodb
 
     positional arguments:
     reffa                 Reference genome (fasta)
@@ -35,9 +47,13 @@ Run
     optional arguments:
     -h, --help            show this help message and exit
     --sample_name SAMPLE_NAME
-                            Set name of sample, used in output.
+                            Set name of sample, used in output [name of bam].
     --format {matrix,sufam}
-                            Set output format
+                            Set output format [sufam]
+    --mpileup-parameters MPILEUP_PARAMETERS
+                            Set options for mpileup [--ignore-RG --min-MQ 1 --max-
+                            depth 250000 --max-idepth 250000]
+    --version             show program's version number and exit
 
 Example
 ~~~~~~~

@@ -11,6 +11,8 @@ import re
 from sufam.mutation import Mutation, MutationsAtSinglePosition
 from collections import Counter
 
+MPILEUP_DEFAULT_PARAMS = '--ignore-RG --min-MQ 1 --max-depth 250000 --max-idepth 250000'
+
 
 class ParseString(object):
 
@@ -92,12 +94,14 @@ def parse(line):
     return '\t'.join([toks[0], toks[1], ref, cov]) + '\t' + str(ParseString(ref, toks[4]))
 
 
-def run(bam, chrom, pos1, pos2, reffa):
+def run(bam, chrom, pos1, pos2, reffa, parameters):
     """Run mpileup on given chrom and pos"""
     posmin = min(pos1, pos2)
     posmax = max(pos1, pos2)
     cmd = "samtools view -bh {bam} {chrom}:{pos1}-{pos2} " \
-        "| samtools mpileup -R -q 1 -f {reffa} -".format(bam=bam, chrom=chrom, pos1=posmin, pos2=posmax, reffa=reffa)
+        "| samtools mpileup {parameters} -f {reffa} -".format(bam=bam, chrom=chrom,
+                                                              pos1=posmin, pos2=posmax,
+                                                              reffa=reffa, parameters=parameters)
     if pos1 == pos2:
         cmd += " | awk '$2 == {pos}'".format(pos=pos1)
     else:
@@ -116,12 +120,12 @@ def run(bam, chrom, pos1, pos2, reffa):
         return stdout
 
 
-def run_and_parse(bam, chrom, pos1, pos2, reffa):
-    return [parse(line) for line in run(bam, chrom, pos1, pos2, reffa).split("\n")[:-1]]
+def run_and_parse(bam, chrom, pos1, pos2, reffa, mpileup_parameters=MPILEUP_DEFAULT_PARAMS):
+    return [parse(line) for line in run(bam, chrom, pos1, pos2, reffa, mpileup_parameters).split("\n")[:-1]]
 
 
-def run_and_get_mutations(bam, chrom, pos1, pos2, reffa):
-    return [get_mutations(line) for line in run(bam, chrom, pos1, pos2, reffa).split("\n")[:-1]]
+def run_and_get_mutations(bam, chrom, pos1, pos2, reffa, mpileup_parameters=MPILEUP_DEFAULT_PARAMS):
+    return [get_mutations(line) for line in run(bam, chrom, pos1, pos2, reffa, mpileup_parameters).split("\n")[:-1]]
 
 
 def main():

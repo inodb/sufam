@@ -178,7 +178,8 @@ def _write_bp(outfile, bp, header, output_format):
         raise(Exception("Unrecognized output format"))
 
 
-def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
+def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile,
+                       mpileup_parameters=mpileup_parser.MPILEUP_DEFAULT_PARAMS):
     """Check if mutations in vcf are in bam"""
     header = []
     output_header = "sample chrom pos ref cov A C G T * - + " \
@@ -209,7 +210,7 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile):
             "cov": 0, "A": 0, "C": 0, "G": 0, "T": 0,
             "val_ref": record["REF"], "val_alt": record["ALT"],
             "val_al_type": record_type, "val_al_count": 0, "val_maf": 0})
-        bp_lines = mpileup_parser.run_and_parse(bam, record["CHROM"], record["POS"], record["POS"], reffa)
+        bp_lines = mpileup_parser.run_and_parse(bam, record["CHROM"], record["POS"], record["POS"], reffa, mpileup_parameters)
         bpdf = get_baseparser_extended_df(sample, bp_lines, record["REF"], record["ALT"])
         if bpdf is None:
             bp = no_cov
@@ -225,13 +226,17 @@ def main():
     parser.add_argument("vcf", type=str, help="VCF with mutations to be validated")
     parser.add_argument("bam", type=str, help="BAM to find mutations in")
     parser.add_argument("--sample_name", type=str, default=None, help="Set name "
-                        "of sample, used in output.")
-    parser.add_argument("--format", type=str, choices=["matrix", "sufam"], default="sufam", help="Set output format")
+                        "of sample, used in output [name of bam].")
+    parser.add_argument("--format", type=str, choices=["matrix", "sufam"], default="sufam",
+                        help="Set output format [sufam]")
+    parser.add_argument("--mpileup-parameters", type=str,  default=mpileup_parser.MPILEUP_DEFAULT_PARAMS,
+                        help="Set options for mpileup [{}]".format(mpileup_parser.MPILEUP_DEFAULT_PARAMS))
     parser.add_argument("--version", action='version', version=sufam.__version__)
     args = parser.parse_args()
     if args.sample_name is None:
         args.sample_name = args.bam
-    validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name, args.format, sys.stdout)
+    validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name,
+                       args.format, sys.stdout, mpileup_parameters=args.mpileup_parameters)
 
 
 if __name__ == "__main__":

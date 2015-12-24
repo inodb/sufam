@@ -1,3 +1,3 @@
 sample	chrom	pos	ref	cov	A	C	G	T	*	-	+	val_ref	val_alt	val_al_type	val_al_count	val_maf	most_common_indel	most_common_indel_count	most_common_indel_maf	most_common_indel_type	most_common_al	most_common_al_count	most_common_al_maf	most_common_count	most_common_maf
-tests/test_data/subset1.bam	17	7574012	C	675	225	450	0	0	0	nan	nan	C	G	snv	0	0.0	nan	nan	nan	nan	A	225	0.333333333333	225	0.333333333333
-tests/test_data/subset1.bam	17	7574012	C	675	225	450	0	0	0	nan	nan	C	A	snv	225	0.333333333333	nan	nan	nan	nan	A	225	0.333333333333	225	0.333333333333
+tests/test_data/subset1.bam	17	7574012	C	673	223	450	0	0	0	nan	nan	C	G	snv	0	0.0	nan	nan	nan	nan	A	223	0.331352154532	223	0.331352154532
+tests/test_data/subset1.bam	17	7574012	C	673	223	450	0	0	0	nan	nan	C	A	snv	223	0.331352154532	nan	nan	nan	nan	A	223	0.331352154532	223	0.331352154532
