@@ -3,7 +3,12 @@ python:
   - "2.7"
 install:
   - sudo apt-get update
-  - sudo apt-get install samtools
+  - wget https://github.com/samtools/samtools/releases/download/1.2/samtools-1.2.tar.bz2
+  - tar xvf samtools-1.2.tar.bz2
+  - cd samtools-1.2
+  - make
+  - cd ..
+  - export PATH="samtools-1.2:$PATH"
   - case "$TRAVIS_PYTHON_VERSION" in
     2*)
       wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh;
