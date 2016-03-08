@@ -1,5 +1,7 @@
 So U Found A Mutation? (SUFAM)
 ==============================
+.. image:: https://zenodo.org/badge/14279/inodb/sufam.svg
+   :target: https://zenodo.org/badge/latestdoi/14279/inodb/sufam
 .. image:: https://badge.fury.io/py/sufam.svg
     :target: http://badge.fury.io/py/sufam
 .. image:: http://anaconda.org/inodb/sufam/badges/version.svg
