@@ -96,20 +96,45 @@ class MutationsAtSinglePosition(object):
 
 
 class Mutation(object):
-    def __init__(self, chrom, pos, type, change):
+    def __init__(self, chrom, pos, type, change, ref=None):
         if type in MUTATION_TYPES:
             self.type = type
         else:
             raise(Exception("Unexpected mutation type should be one of "
                             "{}".format(MUTATION_TYPES)))
         self.chrom = chrom
-        self.pos = pos
+        self.pos = int(pos)
         self.change = change
+        if ref:
+            self.ref = ref
 
     @property
     def maf(self):
         """Requires one to set count and coverage"""
         return self.count / float(self.cov)
+
+    def to_oncotator(self):
+        """Returns mutation in oncotator input format. Assumes mutations have
+        vcf/mpileup style positions."""
+        if self.type == ".":
+            ref = self.ref
+            alt = self.change
+            start = self.pos
+            end = self.pos
+        elif self.type == "-":
+            ref = self.change
+            alt = "-"
+            start = self.pos + 1
+            end = start + len(self.change)
+        elif self.type == "+":
+            ref = "-"
+            alt = self.change
+            start = self.pos
+            end = start + len(self.change)
+        else:
+            raise(Exception("Unexpected mutation type: {}".format(self.type)))
+        return "{chrom}\t{start}\t{end}\t{ref}\t{alt}".format(chrom=self.chrom, start=start,
+                                                            end=end, ref=ref, alt=alt)
 
     def to_vcf(self):
         if self.type == ".":
@@ -148,15 +173,15 @@ class Mutation(object):
 
 def get_mutation(chrom, pos, ref, alt):
     if len(ref) == len(alt):
-        return Mutation(chrom, pos, ".", alt)
+        return Mutation(chrom, pos, ".", alt, ref=ref)
     elif len(ref) > len(alt):
         assert(len(alt) == 1)
         assert(ref[0] == alt)
-        return Mutation(chrom, pos, "-", ref[1:])
+        return Mutation(chrom, pos, "-", ref[1:], ref=ref)
     elif len(ref) < len(alt):
         assert(len(ref) == 1)
         assert(alt[0] == ref)
-        return Mutation(chrom, pos, "+", alt[1:])
+        return Mutation(chrom, pos, "+", alt[1:], ref=ref)
 
 
 def parse_vcf(vcf_file):
