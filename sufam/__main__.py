@@ -14,9 +14,11 @@ Author: inodb
 import argparse
 from collections import Counter
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
+import vcf
 
 import sufam
 from sufam import mpileup_parser
@@ -177,46 +179,69 @@ def _write_bp(outfile, bp, header, output_format):
     else:
         raise(Exception("Unrecognized output format"))
 
+def _write_bp_vcf(outfile, bp, vcf_infos, vcf_writer, record):
+    for h in vcf_infos:
+        record.INFO[h] = bp[h[len('sufam_'):]]
+    vcf_writer.write_record(record)
+
 
 def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile,
                        mpileup_parameters=mpileup_parser.MPILEUP_DEFAULT_PARAMS):
     """Check if mutations in vcf are in bam"""
-    header = []
     output_header = "sample chrom pos ref cov A C G T * - + " \
         "val_ref val_alt val_al_type val_al_count val_maf "\
         "most_common_indel most_common_indel_count most_common_indel_maf most_common_indel_type most_common_al " \
         "most_common_al_count most_common_al_maf most_common_count most_common_maf".split()
 
+    vcf_reader = vcf.Reader(open(vcffile))
+    if output_format == 'vcf':
+        # add sufam info fields
+        vcf_infos = ['sufam_' + h for h in output_header if h.startswith('val_') or h == 'cov']
+        for h in vcf_infos:
+            def vcf_info_type(h):
+                if 'maf' in h:
+                    return 'Float'
+                elif 'count' in h:
+                    return 'Integer'
+                else:
+                    return 'String'
+            vcf_reader.infos[h] = vcf.parser._Info(id=h,
+                                                num=1,
+                                                type='String',
+                                                desc='SUFAM ' + sufam.__version__,
+                                                source=None,
+                                                version=None)
+        vcf_writer = vcf.Writer(sys.stdout, vcf_reader)
+
+
     if output_format == "sufam":
         outfile.write("\t".join(output_header))
         outfile.write("\n")
-    for line in open(vcffile):
-        if line.startswith("#CHROM"):
-            header = line[1:].rstrip('\n').split("\t")
-        if line.startswith("#"):
-            continue
-        if len(header) == 0:
-            raise(Exception("No header found in vcf file, #CHROM not found"))
-        record = dict(zip(header, line.rstrip('\n').split("\t")))
+    for record in vcf_reader:
         record_type = "snv"
-        if len(record["REF"]) > len(record["ALT"]):
+        if len(record.ALT) > 1:
+            warnings.warn("Multiple ALT in one record is not implemented - using first")
+        if len(record.REF) > len(record.ALT[0]):
             record_type = "deletion"
-        elif len(record["ALT"]) > len(record["REF"]):
+        elif len(record.ALT[0]) > len(record.REF):
             record_type = "insertion"
         no_cov = pd.Series({
             "sample": sample,
-            "chrom": record["CHROM"], "pos": record["POS"],
-            "ref": record["REF"],
+            "chrom": str(record.CHROM), "pos": str(record.POS),
+            "ref": str(record.REF),
             "cov": 0, "A": 0, "C": 0, "G": 0, "T": 0,
-            "val_ref": record["REF"], "val_alt": record["ALT"],
+            "val_ref": str(record.REF), "val_alt": str(record.ALT[0]),
             "val_al_type": record_type, "val_al_count": 0, "val_maf": 0})
-        bp_lines = mpileup_parser.run_and_parse(bam, record["CHROM"], record["POS"], record["POS"], reffa, mpileup_parameters)
-        bpdf = get_baseparser_extended_df(sample, bp_lines, record["REF"], record["ALT"])
+        bp_lines = mpileup_parser.run_and_parse(bam, str(record.CHROM), str(record.POS), str(record.POS), reffa, mpileup_parameters)
+        bpdf = get_baseparser_extended_df(sample, bp_lines, str(record.REF), str(record.ALT[0]))
         if bpdf is None:
             bp = no_cov
         else:
             bp = bpdf.ix[0, :]
-        _write_bp(outfile, bp, output_header, output_format)
+        if output_format == "vcf":
+            _write_bp_vcf(outfile, bp, vcf_infos, vcf_writer, record)
+        else:
+            _write_bp(outfile, bp, output_header, output_format)
 
 
 def main():
@@ -227,7 +252,7 @@ def main():
     parser.add_argument("bam", type=str, help="BAM to find mutations in")
     parser.add_argument("--sample_name", type=str, default=None, help="Set name "
                         "of sample, used in output [name of bam].")
-    parser.add_argument("--format", type=str, choices=["matrix", "sufam"], default="sufam",
+    parser.add_argument("--format", type=str, choices=["matrix", "sufam", "vcf"], default="sufam",
                         help="Set output format [sufam]")
     parser.add_argument("--mpileup-parameters", type=str,  default=mpileup_parser.MPILEUP_DEFAULT_PARAMS,
                         help="Set options for mpileup [{}]".format(mpileup_parser.MPILEUP_DEFAULT_PARAMS))

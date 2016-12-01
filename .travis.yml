@@ -11,11 +11,11 @@ install:
   - export PATH="samtools-1.2:$PATH"
   - case "$TRAVIS_PYTHON_VERSION" in
     2*)
-      wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
       PYTHON="python"
       ;;
     3*)
-      wget http://repo.continuum.io/miniconda/Miniconda3-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
       PYTHON="python3"
       ;;
     esac
@@ -25,8 +25,14 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
+  # add bioconda channels 
+  - conda config --add channels conda-forge
+  - conda config --add channels defaults
+  - conda config --add channels r
+  - conda config --add channels bioconda
   - conda create -q -n sufam-env
-    numpy pandas nose
+    --file requirements.txt
   - source activate sufam-env
 script:
+  - source activate sufam-env
   - nosetests
