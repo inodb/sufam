@@ -55,7 +55,9 @@ class TestValidation(object):
                                             "matrix",
                                             out
                                             )
+        # test both at once
         assert_equals("1\n0\n1\n0\n0\n", out.getvalue())
+
 
     def test_mpileup_parser_two_digit_indel(self):
         two_digit_indel = "X\t150349557\tC\t24\t.$,-12caccactggcca.-12CACCACTGGCCA.,.,,,,.-12CACCACTGGCCA,..,,-12caccactggcca..-12CACCACTGGCCA,,,..,\t;FCDDDDDDD/FDCC/C/E<FBDC\n"
@@ -111,3 +113,14 @@ class TestValidation(object):
         test = open(ospj(DATA_PATH, "mpileup_0cov_regionwithcov.tsv")).read()
         bpdf = sufam.__main__.get_baseparser_extended_df("test", [mpileup_parser.parse(test)], "G", "GAA")
         assert_equals(None, bpdf)
+
+    def test_multi_bam_vcf(self):
+        out = StringIO()
+        sufam.__main__.validate_mutations(ospj(DATA_PATH, "mutations.vcf"),
+                                          [ospj(DATA_PATH, "subset{}.bam".format(i)) for i in range(1, 4)],
+                                          ospj(DATA_PATH, "human_g1k_v37_chr17.fa"),
+                                          ["subset{}".format(i) for i in range(1, 4)],
+                                          "vcf",
+                                          out
+                                          )
+        assert_equals(open(ospj(DATA_PATH, "multi_bam.vcf")).read(), out.getvalue())

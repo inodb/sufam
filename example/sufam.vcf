@@ -1,0 +1,6 @@
+##FORMAT=<ID=GT,Number=1,Type=String,Description="">
+##FORMAT=<ID=AD,Number=G,Type=Integer,Description="">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	tests/test_data/subset1.bam
+17	7574012	COSM11286,COSM214290	C	G	100	PASS	.	1/0:675,0:675
+17	7574012	COSM11286,COSM214290	C	A	100	PASS	.	1/1:450,225:675
