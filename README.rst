@@ -26,9 +26,10 @@ Run
 ---
 ::
 
-	usage: sufam [-h] [--sample_name SAMPLE_NAME] [--format {matrix,sufam,vcf}]
+	usage: sufam [-h] [--sample_name SAMPLE_NAME [SAMPLE_NAME ...]]
+				[--format {matrix,sufam,vcf}]
 				[--mpileup-parameters MPILEUP_PARAMETERS] [--version]
-				reffa vcf bam
+				reffa vcf bam [bam ...]
 
 	So U Found A Mutation? (SUFAM)
 
@@ -44,11 +45,12 @@ Run
 	positional arguments:
 	reffa                 Reference genome (fasta)
 	vcf                   VCF with mutations to be validated
-	bam                   BAM to find mutations in
+	bam                   BAMs to find mutations in (only --format vcf supports
+							> 1)
 
 	optional arguments:
 	-h, --help            show this help message and exit
-	--sample_name SAMPLE_NAME
+	--sample_name SAMPLE_NAME [SAMPLE_NAME ...]
 							Set name of sample, used in output [name of bam].
 	--format {matrix,sufam,vcf}
 							Set output format [sufam]
@@ -56,6 +58,8 @@ Run
 							Set options for mpileup [--ignore-RG --min-MQ 1 --max-
 							depth 250000 --max-idepth 250000]
 	--version             show program's version number and exit
+
+
 
 Example
 ~~~~~~~
@@ -75,11 +79,27 @@ Output:
 - `example/sufam.log <example/sufam.log>`_
 - `example/sufam.tsv <example/sufam.tsv>`_
 
-Or if you want vcf output where sufam output is added as info fields in input vcf::
+Or if you want vcf output where sufam output is added as GT/AD/DP format fields in input vcf::
 
     sufam --format vcf human_g1k_v37_chr17.fa mutations.vcf subset1.bam > example/sufam.vcf
 
+Output:
+
 - `example/sufam.vcf <example/sufam.vcf>`_
+
+Or for multiple bams in a single vcf::
+
+	sufam --sample_name subset1 subset2 subset3 \
+	      --format vcf \
+		  human_g1k_v37_chr17.fa \
+		  mutations.vcf \
+		  subset1.bam subset2.bam \
+		  subset3.bam \
+	> example/sufam_multibam.vcf
+
+Output:
+
+- `example/sufam_multibam.vcf <example/sufam_multibam.vcf>`_
  
 Developers
 ----------

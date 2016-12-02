@@ -12,9 +12,10 @@ find the same inconsipicuous mutation.
 Author: inodb
 """
 import argparse
-from collections import Counter
+from collections import Counter, namedtuple
 import sys
 import warnings
+import six
 
 import numpy as np
 import pandas as pd
@@ -179,13 +180,29 @@ def _write_bp(outfile, bp, header, output_format):
     else:
         raise(Exception("Unrecognized output format"))
 
-def _write_bp_vcf(outfile, bp, vcf_infos, vcf_writer, record):
-    for h in vcf_infos:
-        record.INFO[h] = bp[h[len('sufam_'):]]
+
+def _write_bp_vcf(outfile, bps, vcf_writer, record):
+    def determine_genotype(bp):
+        ref = int(int(bp['cov']) - bp.val_al_count > 0)
+        alt = int(bp.val_al_count > 0)
+        return '{}/{}'.format(ref, alt)
+
+    _CallDataFormat = namedtuple('CallDataFormat', 'GT AD DP'.split())
+
+    samp_fmt = vcf.parser.Reader
+    calls = []
+    for bp in bps:
+        call = vcf.model._Call(None,
+                            None,
+                            _CallDataFormat(GT=determine_genotype(bp),
+                                            AD=[int(bp['cov']) - bp.val_al_count, bp.val_al_count],
+                                            DP=bp['cov']))
+        calls += [call]
+    record.samples = calls
     vcf_writer.write_record(record)
 
 
-def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile,
+def validate_mutations(vcffile, bams, reffa, samples, output_format, outfile,
                        mpileup_parameters=mpileup_parser.MPILEUP_DEFAULT_PARAMS):
     """Check if mutations in vcf are in bam"""
     output_header = "sample chrom pos ref cov A C G T * - + " \
@@ -193,31 +210,46 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile,
         "most_common_indel most_common_indel_count most_common_indel_maf most_common_indel_type most_common_al " \
         "most_common_al_count most_common_al_maf most_common_count most_common_maf".split()
 
-    vcf_reader = vcf.Reader(open(vcffile))
+    # for backwards compatibility
+    # if bam or samples is a string, convert to list instead
+    if isinstance(samples, six.string_types):
+        samples = [samples]
+    if isinstance(bams, six.string_types):
+        bams = [bams]
+
     if output_format == 'vcf':
-        # add sufam info fields
-        vcf_infos = ['sufam_' + h for h in output_header if h.startswith('val_') or h == 'cov']
-        for h in vcf_infos:
-            def vcf_info_type(h):
-                if 'maf' in h:
-                    return 'Float'
-                elif 'count' in h:
-                    return 'Integer'
-                else:
-                    return 'String'
-            vcf_reader.infos[h] = vcf.parser._Info(id=h,
-                                                num=1,
-                                                type='String',
-                                                desc='SUFAM ' + sufam.__version__,
-                                                source=None,
-                                                version=None)
-        vcf_writer = vcf.Writer(sys.stdout, vcf_reader)
+        vcf_reader = vcf.Reader(open(vcffile))
+        vcf_reader.samples = samples
+        for f in 'GT AD DP'.split():
+            vcf_reader.formats[f] = vcf.parser._Format(id=f,
+                                                       num='G' if f == 'AD' else 1,
+                                                       type='String' if f == 'GT' else 'Integer',
+                                                       desc='')
+        vcf_writer = vcf.Writer(outfile, vcf_reader)
+    else:
+        vcf_reader = open(vcffile)
 
 
     if output_format == "sufam":
         outfile.write("\t".join(output_header))
         outfile.write("\n")
     for record in vcf_reader:
+        if output_format != 'vcf':
+            line = record
+            if line.startswith("#CHROM"):
+                header = line[1:].rstrip('\n').split("\t")
+                # create spoof pyvcf record if vcf_reader is not used
+                _Record = namedtuple('Record', header)
+            if line.startswith("#"):
+                continue
+            if len(header) == 0:
+                raise(Exception("No header found in vcf file #CHROM not found"))
+            # zip all column values, except alt (needs to be list in pyvcf)
+            record_args = dict(zip(header, line.rstrip('\n').split("\t")))
+            record_args['ALT'] = [record_args['ALT']]
+            record = _Record(**record_args)
+
+        # determine type of mutation
         record_type = "snv"
         if len(record.ALT) > 1:
             warnings.warn("Multiple ALT in one record is not implemented - using first")
@@ -225,23 +257,34 @@ def validate_mutations(vcffile, bam, reffa, sample, output_format, outfile,
             record_type = "deletion"
         elif len(record.ALT[0]) > len(record.REF):
             record_type = "insertion"
+
+        # no coverage results
         no_cov = pd.Series({
-            "sample": sample,
             "chrom": str(record.CHROM), "pos": str(record.POS),
             "ref": str(record.REF),
             "cov": 0, "A": 0, "C": 0, "G": 0, "T": 0,
             "val_ref": str(record.REF), "val_alt": str(record.ALT[0]),
             "val_al_type": record_type, "val_al_count": 0, "val_maf": 0})
-        bp_lines = mpileup_parser.run_and_parse(bam, str(record.CHROM), str(record.POS), str(record.POS), reffa, mpileup_parameters)
-        bpdf = get_baseparser_extended_df(sample, bp_lines, str(record.REF), str(record.ALT[0]))
-        if bpdf is None:
-            bp = no_cov
-        else:
-            bp = bpdf.ix[0, :]
+
+        # collect mpileup baseparser results per bam
+        bps = []
+        for i, bam in enumerate(bams):
+            sample = samples[i]
+            no_cov['sample'] = sample
+            bp_lines = mpileup_parser.run_and_parse(bam, str(record.CHROM), str(record.POS), str(record.POS), reffa, mpileup_parameters)
+            bpdf = get_baseparser_extended_df(sample, bp_lines, str(record.REF), str(record.ALT[0]))
+            if bpdf is None:
+                bp = no_cov
+            else:
+                bp = bpdf.ix[0, :]
+            bps += [bp]
+
+        # output call
         if output_format == "vcf":
-            _write_bp_vcf(outfile, bp, vcf_infos, vcf_writer, record)
+            _write_bp_vcf(outfile, bps, vcf_writer, record)
         else:
-            _write_bp(outfile, bp, output_header, output_format)
+            # only one bam file supported for outputs other than vcf
+            _write_bp(outfile, bps[0], output_header, output_format)
 
 
 def main():
@@ -249,8 +292,8 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("reffa", type=str, help="Reference genome (fasta)")
     parser.add_argument("vcf", type=str, help="VCF with mutations to be validated")
-    parser.add_argument("bam", type=str, help="BAM to find mutations in")
-    parser.add_argument("--sample_name", type=str, default=None, help="Set name "
+    parser.add_argument("bam", type=str, nargs='+', help="BAMs to find mutations in (only --format vcf supports > 1)")
+    parser.add_argument("--sample_name", type=str, nargs='+', default=None, help="Set name "
                         "of sample, used in output [name of bam].")
     parser.add_argument("--format", type=str, choices=["matrix", "sufam", "vcf"], default="sufam",
                         help="Set output format [sufam]")
@@ -260,6 +303,10 @@ def main():
     args = parser.parse_args()
     if args.sample_name is None:
         args.sample_name = args.bam
+    if len(args.bam) > 1 and args.format != 'vcf':
+        raise(Exception('Multiple bam files is only supported for --format vcf'))
+    if len(args.sample_name) != len(args.bam):
+        raise(Exception('# of --sample_name arguments should be equal to # of bams'))
     validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name,
                        args.format, sys.stdout, mpileup_parameters=args.mpileup_parameters)
 

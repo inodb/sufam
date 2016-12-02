@@ -1,9 +1,6 @@
-##INFO=<ID=sufam_cov,Number=1,Type=String,Description="SUFAM v0.4.2+2.g0891b9d.dirty">
-##INFO=<ID=sufam_val_ref,Number=1,Type=String,Description="SUFAM v0.4.2+2.g0891b9d.dirty">
-##INFO=<ID=sufam_val_alt,Number=1,Type=String,Description="SUFAM v0.4.2+2.g0891b9d.dirty">
-##INFO=<ID=sufam_val_al_type,Number=1,Type=String,Description="SUFAM v0.4.2+2.g0891b9d.dirty">
-##INFO=<ID=sufam_val_al_count,Number=1,Type=String,Description="SUFAM v0.4.2+2.g0891b9d.dirty">
-##INFO=<ID=sufam_val_maf,Number=1,Type=String,Description="SUFAM v0.4.2+2.g0891b9d.dirty">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
-17	7574012	COSM11286,COSM214290	C	G	100	PASS	sufam_cov=675;sufam_val_ref=C;sufam_val_alt=G;sufam_val_al_type=snv;sufam_val_al_count=0;sufam_val_maf=0.0
-17	7574012	COSM11286,COSM214290	C	A	100	PASS	sufam_cov=675;sufam_val_ref=C;sufam_val_alt=A;sufam_val_al_type=snv;sufam_val_al_count=225;sufam_val_maf=0.333333333333
+##FORMAT=<ID=GT,Number=1,Type=String,Description="">
+##FORMAT=<ID=AD,Number=G,Type=Integer,Description="">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	tests/test_data/subset1.bam
+17	7574012	COSM11286,COSM214290	C	G	100	PASS	.	1/0:675,0:675
+17	7574012	COSM11286,COSM214290	C	A	100	PASS	.	1/1:450,225:675
