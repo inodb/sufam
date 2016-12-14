@@ -187,22 +187,25 @@ def _write_bp_vcf(outfile, bps, vcf_writer, record):
         alt = int(bp.val_al_count > 0)
         return '{}/{}'.format(ref, alt)
 
+    record.FORMAT = "GT:AD:DP"
     _CallDataFormat = namedtuple('CallDataFormat', 'GT AD DP'.split())
 
     samp_fmt = vcf.parser.Reader
     calls = []
     for bp in bps:
         call = vcf.model._Call(None,
-                            None,
-                            _CallDataFormat(GT=determine_genotype(bp),
-                                            AD=[int(bp['cov']) - bp.val_al_count, bp.val_al_count],
-                                            DP=bp['cov']))
+                               None,
+                               _CallDataFormat(GT=determine_genotype(bp),
+                                               AD=[int(bp['cov']) - bp.val_al_count, bp.val_al_count],
+                                               DP=bp['cov']))
         calls += [call]
     record.samples = calls
+    if record.FILTER is None:
+        record.FILTER = []
     vcf_writer.write_record(record)
 
 
-def validate_mutations(vcffile, bams, reffa, samples, output_format, outfile,
+def validate_mutations(vcffile, bams, reffa, chr_reffa, samples, output_format, outfile,
                        mpileup_parameters=mpileup_parser.MPILEUP_DEFAULT_PARAMS):
     """Check if mutations in vcf are in bam"""
     output_header = "sample chrom pos ref cov A C G T * - + " \
@@ -220,11 +223,9 @@ def validate_mutations(vcffile, bams, reffa, samples, output_format, outfile,
     if output_format == 'vcf':
         vcf_reader = vcf.Reader(open(vcffile))
         vcf_reader.samples = samples
-        for f in 'GT AD DP'.split():
-            vcf_reader.formats[f] = vcf.parser._Format(id=f,
-                                                       num='G' if f == 'AD' else 1,
-                                                       type='String' if f == 'GT' else 'Integer',
-                                                       desc='')
+        vcf_reader.formats['GT'] = vcf.parser._Format(id='GT', num=1, type='String', desc="Genotype")
+        vcf_reader.formats['AD'] = vcf.parser._Format(id='AD', num='.', type='Integer', desc="Allelic depth")
+        vcf_reader.formats['DP'] = vcf.parser._Format(id='DP', num=1, type='Integer', desc="Depth")
         vcf_writer = vcf.Writer(outfile, vcf_reader)
     else:
         vcf_reader = open(vcffile)
@@ -271,7 +272,8 @@ def validate_mutations(vcffile, bams, reffa, samples, output_format, outfile,
         for i, bam in enumerate(bams):
             sample = samples[i]
             no_cov['sample'] = sample
-            bp_lines = mpileup_parser.run_and_parse(bam, str(record.CHROM), str(record.POS), str(record.POS), reffa, mpileup_parameters)
+            bp_lines = mpileup_parser.run_and_parse(bam, str(record.CHROM), str(record.POS), str(record.POS), reffa,
+                                                    chr_reffa, mpileup_parameters)
             bpdf = get_baseparser_extended_df(sample, bp_lines, str(record.REF), str(record.ALT[0]))
             if bpdf is None:
                 bp = no_cov
@@ -293,6 +295,7 @@ def main():
     parser.add_argument("reffa", type=str, help="Reference genome (fasta)")
     parser.add_argument("vcf", type=str, help="VCF with mutations to be validated")
     parser.add_argument("bam", type=str, nargs='+', help="BAMs to find mutations in (only --format vcf supports > 1)")
+    parser.add_argument("--chr_reffa", type=str, default = None, help="chr reference genome (fasta) - reference file with chr")
     parser.add_argument("--sample_name", type=str, nargs='+', default=None, help="Set name "
                         "of sample, used in output [name of bam].")
     parser.add_argument("--format", type=str, choices=["matrix", "sufam", "vcf"], default="sufam",
@@ -307,7 +310,7 @@ def main():
         raise(Exception('Multiple bam files is only supported for --format vcf'))
     if len(args.sample_name) != len(args.bam):
         raise(Exception('# of --sample_name arguments should be equal to # of bams'))
-    validate_mutations(args.vcf, args.bam, args.reffa, args.sample_name,
+    validate_mutations(args.vcf, args.bam, args.reffa, args.chr_reffa, args.sample_name,
                        args.format, sys.stdout, mpileup_parameters=args.mpileup_parameters)
 
 
