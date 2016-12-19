@@ -94,8 +94,24 @@ def parse(line):
     return '\t'.join([toks[0], toks[1], ref, cov]) + '\t' + str(ParseString(ref, toks[4]))
 
 
-def run(bam, chrom, pos1, pos2, reffa, parameters):
+def run(bam, chrom, pos1, pos2, reffa, chr_reffa, parameters):
     """Run mpileup on given chrom and pos"""
+
+    # check for chr ref
+    is_chr_query = chrom.startswith('chr')
+    if is_chr_query and chr_reffa is None:
+        chr_reffa = reffa
+
+    # check bam ref type
+    bam_header = subprocess.check_output("samtools view -H {}".format(bam), shell=True)
+    is_chr_bam = bam_header.find('SN:chr') != -1
+    if is_chr_bam:
+        reffa = chr_reffa
+    if not is_chr_query and is_chr_bam:
+        chrom = 'chr' + chrom
+    if is_chr_query and not is_chr_bam:
+        chrom = re.sub(r'^chr', '', chrom)
+
     posmin = min(pos1, pos2)
     posmax = max(pos1, pos2)
     cmd = "samtools view -bh {bam} {chrom}:{pos1}-{pos2} " \
@@ -120,12 +136,12 @@ def run(bam, chrom, pos1, pos2, reffa, parameters):
         return stdout
 
 
-def run_and_parse(bam, chrom, pos1, pos2, reffa, mpileup_parameters=MPILEUP_DEFAULT_PARAMS):
-    return [parse(line) for line in run(bam, chrom, pos1, pos2, reffa, mpileup_parameters).split("\n")[:-1]]
+def run_and_parse(bam, chrom, pos1, pos2, reffa, chr_reffa, mpileup_parameters=MPILEUP_DEFAULT_PARAMS):
+    return [parse(line) for line in run(bam, chrom, pos1, pos2, reffa, chr_reffa, mpileup_parameters).split("\n")[:-1]]
 
 
-def run_and_get_mutations(bam, chrom, pos1, pos2, reffa, mpileup_parameters=MPILEUP_DEFAULT_PARAMS):
-    return [get_mutations(line) for line in run(bam, chrom, pos1, pos2, reffa, mpileup_parameters).split("\n")[:-1]]
+def run_and_get_mutations(bam, chrom, pos1, pos2, reffa, chr_reffa, mpileup_parameters=MPILEUP_DEFAULT_PARAMS):
+    return [get_mutations(line) for line in run(bam, chrom, pos1, pos2, reffa, chr_reffa, mpileup_parameters).split("\n")[:-1]]
 
 
 def main():
