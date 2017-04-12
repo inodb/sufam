@@ -222,7 +222,7 @@ def validate_mutations(vcffile, bams, reffa, samples, output_format, outfile,
         vcf_reader.samples = samples
         for f in 'GT AD DP'.split():
             vcf_reader.formats[f] = vcf.parser._Format(id=f,
-                                                       num='G' if f == 'AD' else 1,
+                                                       num='R' if f == 'AD' else 1,
                                                        type='String' if f == 'GT' else 'Integer',
                                                        desc='')
         vcf_writer = vcf.Writer(outfile, vcf_reader)
