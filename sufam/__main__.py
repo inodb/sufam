@@ -202,6 +202,8 @@ def _write_bp_vcf(outfile, bps, vcf_writer, record):
     record.samples = calls
     if record.FILTER is None:
         record.FILTER = []
+    if record.INFO is None:
+        record.INFO = {}
     vcf_writer.write_record(record)
 
 
@@ -226,6 +228,7 @@ def validate_mutations(vcffile, bams, reffa, chr_reffa, samples, output_format, 
         vcf_reader.formats['GT'] = vcf.parser._Format(id='GT', num=1, type='String', desc="Genotype")
         vcf_reader.formats['AD'] = vcf.parser._Format(id='AD', num='R', type='Integer', desc="Allelic depth")
         vcf_reader.formats['DP'] = vcf.parser._Format(id='DP', num=1, type='Integer', desc="Depth")
+        vcf_reader.column_headers = ['CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
         vcf_writer = vcf.Writer(outfile, vcf_reader)
     else:
         vcf_reader = open(vcffile)
